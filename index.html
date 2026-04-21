@@ -2,82 +2,129 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Haunted Forest – Embedded Caps</title>
 <style>
+  :root {
+    --safe-top: max(14px, env(safe-area-inset-top));
+    --safe-left: max(14px, env(safe-area-inset-left));
+    --safe-right: max(14px, env(safe-area-inset-right));
+    --safe-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+  }
+
   body {
     margin: 0;
     overflow: hidden;
     background: black;
+    touch-action: manipulation;
   }
+
   canvas {
     image-rendering: pixelated;
     display: block;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
   }
 
-#gameIntro {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  font-family: monospace;
-}
+  #gameIntro {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 10px);
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-family: monospace;
+  }
 
-#gameIntro .panel {
-  border: 2px solid #39ff14;
-  padding: 30px;
-  text-align: center;
-  color: #39ff14;
-  background: black;
-  box-shadow: 0 0 20px #39ff14;
-}
+  #gameIntro .panel {
+    width: min(92vw, 560px);
+    max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px);
+    overflow: auto;
+    border: 2px solid #39ff14;
+    padding: clamp(18px, 4vw, 30px);
+    text-align: center;
+    color: #39ff14;
+    background: black;
+    box-shadow: 0 0 20px #39ff14;
+  }
 
-#gameIntro h1 {
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-}
+  #gameIntro h1 {
+    margin: 0 0 18px;
+    letter-spacing: clamp(1px, 0.45vw, 2px);
+    font-size: clamp(24px, 5vw, 36px);
+    line-height: 1.1;
+  }
 
-#gameIntro button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: black;
-  color: #39ff14;
-  border: 1px solid #39ff14;
-  cursor: pointer;
-}
+  #gameIntro p {
+    margin: 0;
+    font-size: clamp(14px, 3vw, 18px);
+    line-height: 1.7;
+  }
 
-#gameIntro button:hover {
-  background: #39ff14;
-  color: black;
-}
+  #gameIntro button {
+    margin-top: 20px;
+    padding: 12px 22px;
+    min-height: 44px;
+    min-width: 132px;
+    font: inherit;
+    font-size: clamp(14px, 3vw, 18px);
+    background: black;
+    color: #39ff14;
+    border: 1px solid #39ff14;
+    cursor: pointer;
+  }
 
+  #gameIntro button:hover {
+    background: #39ff14;
+    color: black;
+  }
 
+  #forestTopBanner {
+    position: fixed;
+    top: var(--safe-top);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5000;
+    width: min(92vw, 760px);
+    max-width: calc(100vw - var(--safe-left) - var(--safe-right));
+    font-family: monospace;
+    font-size: clamp(12px, 2.1vw, 18px);
+    line-height: 1.35;
+    letter-spacing: clamp(0.5px, 0.15vw, 1px);
+    color: #fff200;
+    background: rgba(120, 0, 0, 0.88);
+    border: 1px solid #caa800;
+    padding: clamp(8px, 1.8vw, 12px) clamp(12px, 3vw, 26px);
+    box-shadow: 0 0 0 1px rgba(255, 210, 0, 0.15) inset;
+    pointer-events: none;
+    display: none;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 
-#forestTopBanner {
-  position: fixed;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5000;
-  font-family: monospace;
-  font-size: 18px;
-  letter-spacing: 1px;
-  color: #fff200;
-  background: rgba(120, 0, 0, 0.88);
-  border: 1px solid #caa800;
-  padding: 12px 26px;
-  box-shadow: 0 0 0 1px rgba(255, 210, 0, 0.15) inset;
-  pointer-events: none;
-  display: none;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
+  @media (max-width: 640px) {
+    #forestTopBanner {
+      width: calc(100vw - var(--safe-left) - var(--safe-right));
+    }
+  }
 </style>
 </head>
 <body>
@@ -110,8 +157,20 @@ camera.position.set(0, 2, 10);
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: false });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(0.5);
+
+function applyResponsiveLayout() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const responsivePixelRatio = width < 640 ? Math.min(dpr, 1.25) : width < 1024 ? Math.min(dpr, 1.5) : Math.min(dpr, 2);
+
+  camera.aspect = width / Math.max(height, 1);
+  camera.updateProjectionMatrix();
+  renderer.setPixelRatio(responsivePixelRatio);
+  renderer.setSize(width, height, false);
+}
+
+applyResponsiveLayout();
 document.body.appendChild(renderer.domElement);
 
 // Light
@@ -1145,11 +1204,11 @@ renderer.render(scene, camera);
 
 animate();
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+window.addEventListener("resize", applyResponsiveLayout);
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", applyResponsiveLayout);
+}
 
 const intro = document.getElementById("gameIntro");
 const startBtn = document.getElementById("startBtn");
