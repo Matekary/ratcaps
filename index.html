@@ -2,17 +2,122 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Haunted Forest – Embedded Caps</title>
 <style>
+  html, body {
+    width: 100%;
+    height: 100%;
+  }
   body {
     margin: 0;
     overflow: hidden;
     background: black;
+    touch-action: none;
+    overscroll-behavior: none;
+    font-family: monospace;
   }
   canvas {
     image-rendering: pixelated;
     display: block;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
   }
+
+#hudHint {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  color: #ffff00;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,0,0.45);
+  padding: 8px 12px;
+  font-size: clamp(11px, 2.7vw, 14px);
+  letter-spacing: 0.08em;
+  text-align: center;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+#mobileControls {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  display: none;
+}
+
+.mobile-look-zone {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.mobile-move-pad {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(42vw, 180px);
+  height: min(42vw, 180px);
+  border: 1px solid rgba(57,255,20,0.45);
+  background: rgba(0,0,0,0.28);
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 6px;
+  padding: 8px;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+}
+
+.mobile-btn {
+  border: 1px solid rgba(255,255,0,0.7);
+  background: rgba(0,0,0,0.55);
+  color: #ffff00;
+  font-size: clamp(16px, 4vw, 24px);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-btn:active, #gameIntro button:active {
+  transform: scale(0.98);
+}
+
+.mobile-forward { grid-column: 2; grid-row: 1; }
+.mobile-left { grid-column: 1; grid-row: 2; }
+.mobile-right { grid-column: 3; grid-row: 2; }
+.mobile-back { grid-column: 2; grid-row: 3; }
+
+@media (hover: none), (pointer: coarse) {
+  #mobileControls { display: block; }
+}
+
+@media (max-width: 700px) {
+  #gameIntro .panel {
+    width: min(90vw, 420px);
+    padding: 22px 18px;
+  }
+  #gameIntro h1 {
+    font-size: clamp(22px, 7vw, 34px);
+  }
+  #gameIntro p {
+    font-size: clamp(13px, 3.6vw, 16px);
+    line-height: 1.5;
+  }
+  #gameIntro button {
+    width: 100%;
+    min-height: 52px;
+    font-size: 16px;
+  }
+}
 
 #gameIntro {
   position: fixed;
@@ -31,9 +136,10 @@
 #gameIntro .panel {
   border: 2px solid #39ff14;
   padding: 30px;
+  width: min(88vw, 460px);
   text-align: center;
   color: #39ff14;
-  background: black;
+  background: rgba(0,0,0,0.92);
   box-shadow: 0 0 20px #39ff14;
 }
 
@@ -72,6 +178,18 @@
   </div>
 </div>
 
+<div id="hudHint">TAP OBJECTS TO ENTER PORTALS</div>
+
+<div id="mobileControls" aria-hidden="true">
+  <div class="mobile-look-zone" id="lookZone"></div>
+  <div class="mobile-move-pad">
+    <div class="mobile-btn mobile-forward" data-move="forward">▲</div>
+    <div class="mobile-btn mobile-left" data-move="left">◀</div>
+    <div class="mobile-btn mobile-right" data-move="right">▶</div>
+    <div class="mobile-btn mobile-back" data-move="back">▼</div>
+  </div>
+</div>
+
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
 
@@ -87,7 +205,7 @@ camera.position.set(0, 2, 10);
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(0.5);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 document.body.appendChild(renderer.domElement);
 
 // Light
@@ -616,6 +734,19 @@ const capLinks = [
   "https://ratcaps.myshopify.com/products/ratbow1?variant=53085458497830"
 ];
 
+const isTouchDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+const hudHint = document.getElementById("hudHint");
+const lookZone = document.getElementById("lookZone");
+const intro = document.getElementById("gameIntro");
+const startBtn = document.getElementById("startBtn");
+
+function updateHudHint() {
+  hudHint.textContent = isTouchDevice
+    ? "DRAG TO LOOK • USE ARROWS TO MOVE • TAP OBJECTS"
+    : "WASD TO MOVE • MOUSE TO LOOK • CLICK OBJECTS";
+}
+updateHudHint();
+
 // Movement
 let moveForward = false;
 let moveBackward = false;
@@ -638,25 +769,74 @@ document.addEventListener("keyup", (e) => {
   if (e.code === "KeyD") moveRight = false;
 });
 
+function setMoveState(direction, active) {
+  if (direction === "forward") moveForward = active;
+  if (direction === "back") moveBackward = active;
+  if (direction === "left") moveLeft = active;
+  if (direction === "right") moveRight = active;
+}
+
+document.querySelectorAll(".mobile-btn").forEach((btn) => {
+  const direction = btn.dataset.move;
+  btn.addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+    setMoveState(direction, true);
+  }, { passive: true });
+  btn.addEventListener("touchend", (e) => {
+    e.stopPropagation();
+    setMoveState(direction, false);
+  }, { passive: true });
+  btn.addEventListener("touchcancel", () => setMoveState(direction, false), { passive: true });
+});
+
 document.addEventListener("click", () => {
-  document.body.requestPointerLock();
+  if (!isTouchDevice && document.body.requestPointerLock) {
+    document.body.requestPointerLock();
+  }
 });
 
 document.addEventListener("mousemove", (e) => {
-  if (document.pointerLockElement === document.body) {
+  if (!isTouchDevice && document.pointerLockElement === document.body) {
     yaw -= e.movementX * 0.002;
     pitch -= e.movementY * 0.002;
     pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
   }
 });
 
-// Click caps
+if (isTouchDevice && lookZone) {
+  let lastTouchX = null;
+  let lastTouchY = null;
+
+  lookZone.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    lastTouchX = t.clientX;
+    lastTouchY = t.clientY;
+  }, { passive: true });
+
+  lookZone.addEventListener("touchmove", (e) => {
+    const t = e.touches[0];
+    if (lastTouchX !== null && lastTouchY !== null) {
+      yaw -= (t.clientX - lastTouchX) * 0.004;
+      pitch -= (t.clientY - lastTouchY) * 0.004;
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+    }
+    lastTouchX = t.clientX;
+    lastTouchY = t.clientY;
+  }, { passive: true });
+
+  lookZone.addEventListener("touchend", () => {
+    lastTouchX = null;
+    lastTouchY = null;
+  }, { passive: true });
+}
+
+// Click / tap portals
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-window.addEventListener("mousedown", (event) => {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+function handlePortalActivation(clientX, clientY) {
+  mouse.x = (clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
 
@@ -673,7 +853,16 @@ window.addEventListener("mousedown", (event) => {
       window.location.href = capLinks[clickedIndex];
     }
   }
+}
+
+window.addEventListener("mousedown", (event) => {
+  handlePortalActivation(event.clientX, event.clientY);
 });
+
+window.addEventListener("touchend", (event) => {
+  const t = event.changedTouches[0];
+  if (t) handlePortalActivation(t.clientX, t.clientY);
+}, { passive: true });
 
 // Animate
 function animate() {
@@ -772,18 +961,22 @@ renderer.render(scene, camera);
 
 animate();
 
-window.addEventListener("resize", () => {
+function resizeScene() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+}
 
-const intro = document.getElementById("gameIntro");
-const startBtn = document.getElementById("startBtn");
+window.addEventListener("resize", resizeScene);
+window.addEventListener("orientationchange", () => setTimeout(resizeScene, 120));
+resizeScene();
 
 startBtn.addEventListener("click", () => {
   intro.style.display = "none";
-  document.body.requestPointerLock();
+  if (!isTouchDevice && document.body.requestPointerLock) {
+    document.body.requestPointerLock();
+  }
 });
 
 </script>
