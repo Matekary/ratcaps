@@ -2,122 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Haunted Forest – Embedded Caps</title>
 <style>
-  html, body {
-    width: 100%;
-    height: 100%;
-  }
   body {
     margin: 0;
     overflow: hidden;
     background: black;
-    touch-action: none;
-    overscroll-behavior: none;
-    font-family: monospace;
   }
   canvas {
     image-rendering: pixelated;
     display: block;
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
   }
-
-#hudHint {
-  position: fixed;
-  top: max(12px, env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60;
-  color: #ffff00;
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,0,0.45);
-  padding: 8px 12px;
-  font-size: clamp(11px, 2.7vw, 14px);
-  letter-spacing: 0.08em;
-  text-align: center;
-  pointer-events: none;
-  backdrop-filter: blur(4px);
-}
-
-#mobileControls {
-  position: fixed;
-  inset: 0;
-  z-index: 55;
-  pointer-events: none;
-  display: none;
-}
-
-.mobile-look-zone {
-  position: absolute;
-  inset: 0;
-  pointer-events: auto;
-}
-
-.mobile-move-pad {
-  position: absolute;
-  left: max(12px, env(safe-area-inset-left));
-  bottom: max(16px, env(safe-area-inset-bottom));
-  width: min(42vw, 180px);
-  height: min(42vw, 180px);
-  border: 1px solid rgba(57,255,20,0.45);
-  background: rgba(0,0,0,0.28);
-  border-radius: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 6px;
-  padding: 8px;
-  pointer-events: auto;
-  backdrop-filter: blur(4px);
-}
-
-.mobile-btn {
-  border: 1px solid rgba(255,255,0,0.7);
-  background: rgba(0,0,0,0.55);
-  color: #ffff00;
-  font-size: clamp(16px, 4vw, 24px);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.mobile-btn:active, #gameIntro button:active {
-  transform: scale(0.98);
-}
-
-.mobile-forward { grid-column: 2; grid-row: 1; }
-.mobile-left { grid-column: 1; grid-row: 2; }
-.mobile-right { grid-column: 3; grid-row: 2; }
-.mobile-back { grid-column: 2; grid-row: 3; }
-
-@media (hover: none), (pointer: coarse) {
-  #mobileControls { display: block; }
-}
-
-@media (max-width: 700px) {
-  #gameIntro .panel {
-    width: min(90vw, 420px);
-    padding: 22px 18px;
-  }
-  #gameIntro h1 {
-    font-size: clamp(22px, 7vw, 34px);
-  }
-  #gameIntro p {
-    font-size: clamp(13px, 3.6vw, 16px);
-    line-height: 1.5;
-  }
-  #gameIntro button {
-    width: 100%;
-    min-height: 52px;
-    font-size: 16px;
-  }
-}
 
 #gameIntro {
   position: fixed;
@@ -136,10 +31,9 @@
 #gameIntro .panel {
   border: 2px solid #39ff14;
   padding: 30px;
-  width: min(88vw, 460px);
   text-align: center;
   color: #39ff14;
-  background: rgba(0,0,0,0.92);
+  background: black;
   box-shadow: 0 0 20px #39ff14;
 }
 
@@ -162,6 +56,28 @@
   color: black;
 }
 
+
+
+#forestTopBanner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5000;
+  font-family: monospace;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #fff200;
+  background: rgba(120, 0, 0, 0.88);
+  border: 1px solid #caa800;
+  padding: 12px 26px;
+  box-shadow: 0 0 0 1px rgba(255, 210, 0, 0.15) inset;
+  pointer-events: none;
+  display: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 </style>
 </head>
 <body>
@@ -172,23 +88,13 @@
     <p>
       MOVE : WASD<br>
       LOOK : MOUSE<br>
-      CLICK OBJECTS : ENTER PORTALS
-    </p>
+      CLICK OBJECTS : ENTER PORTALS<br></p>
     <button id="startBtn">ENTER</button>
   </div>
 </div>
 
-<div id="hudHint">TAP OBJECTS TO ENTER PORTALS</div>
 
-<div id="mobileControls" aria-hidden="true">
-  <div class="mobile-look-zone" id="lookZone"></div>
-  <div class="mobile-move-pad">
-    <div class="mobile-btn mobile-forward" data-move="forward">▲</div>
-    <div class="mobile-btn mobile-left" data-move="left">◀</div>
-    <div class="mobile-btn mobile-right" data-move="right">▶</div>
-    <div class="mobile-btn mobile-back" data-move="back">▼</div>
-  </div>
-</div>
+<div id="forestTopBanner">WASD TO MOVE • MOUSE TO LOOK • CLICK OBJECTS</div>
 
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
@@ -205,7 +111,7 @@ camera.position.set(0, 2, 10);
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.setPixelRatio(0.5);
 document.body.appendChild(renderer.domElement);
 
 // Light
@@ -215,6 +121,7 @@ scene.add(light);
 
 // Shared texture loader
 const textureLoader = new THREE.TextureLoader();
+const forestTopBanner = document.getElementById('forestTopBanner');
 const clouds = [];
 const comets = [];
 const cometParticles = [];
@@ -343,6 +250,89 @@ for (let i = 0; i < 220; i++) {
   createGrassTuft((Math.random() - 0.5) * 120, (Math.random() - 0.5) * 120);
 }
 
+
+
+// Magenta micro flowers
+function createMagentaPlant(x, z) {
+  const plant = new THREE.Group();
+  plant.position.set(x, 0.01, z);
+
+  const stem = new THREE.Mesh(
+    new THREE.BoxGeometry(0.03, 0.25 + Math.random()*0.2, 0.03),
+    new THREE.MeshBasicMaterial({ color: 0x2c7a1f })
+  );
+  stem.position.y = 0.15;
+  plant.add(stem);
+
+  const petalCount = 4 + Math.floor(Math.random()*2);
+
+  for (let i = 0; i < petalCount; i++) {
+    const petal = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.08, 0.02),
+      new THREE.MeshBasicMaterial({ color: 0xFF00FF })
+    );
+    petal.position.y = 0.35;
+    petal.position.x = Math.cos(i * Math.PI * 2 / petalCount) * 0.07;
+    petal.position.z = Math.sin(i * Math.PI * 2 / petalCount) * 0.07;
+    plant.add(petal);
+  }
+
+  scene.add(plant);
+}
+
+// spawn magenta plants
+for (let i = 0; i < 260; i++) {
+  createMagentaPlant(
+    (Math.random() - 0.5) * 120,
+    (Math.random() - 0.5) * 120
+  );
+}
+
+
+
+
+// Fallen broken branches
+function createFallenBranch(x, z) {
+  const branch = new THREE.Group();
+  branch.position.set(x, 0.02, z);
+
+  const length = 0.6 + Math.random() * 1.2;
+
+  const main = new THREE.Mesh(
+    new THREE.BoxGeometry(length, 0.08, 0.08),
+    new THREE.MeshBasicMaterial({ color: 0x1a0d00 })
+  );
+
+  main.rotation.y = Math.random() * Math.PI;
+  main.rotation.z = (Math.random() - 0.5) * 0.4;
+  branch.add(main);
+
+  // small broken off shoots
+  const twigCount = 1 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < twigCount; i++) {
+    const twig = new THREE.Mesh(
+      new THREE.BoxGeometry(0.3 + Math.random()*0.4, 0.05, 0.05),
+      new THREE.MeshBasicMaterial({ color: 0x1a0d00 })
+    );
+    twig.position.x = (Math.random() - 0.5) * length;
+    twig.position.y = 0.05;
+    twig.rotation.z = (Math.random() - 0.5) * 1.2;
+    twig.rotation.y = Math.random() * Math.PI;
+    branch.add(twig);
+  }
+
+  scene.add(branch);
+}
+
+// scatter fallen branches
+for (let i = 0; i < 180; i++) {
+  createFallenBranch(
+    (Math.random() - 0.5) * 140,
+    (Math.random() - 0.5) * 140
+  );
+}
+
+
 // Acid yellow flowers
 function createFlower(x, z, scale = 1) {
   const flower = new THREE.Group();
@@ -436,6 +426,157 @@ for (let i = 0; i < 180; i++) {
     (Math.random() - 0.5) * 120,
     0.8 + Math.random() * 0.8
   ));
+}
+
+
+// Tiny blue pixel mushrooms inspired by reference 3
+const blueMushrooms = [];
+
+function makeBlueMushroomTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 16;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 16, 16);
+
+  const px = (x, y, c) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(x, y, 1, 1);
+  };
+
+  const outline = '#0a1733';
+  const darkBlue = '#1b63d7';
+  const midBlue = '#3da0ff';
+  const lightBlue = '#94d8ff';
+  const stemDark = '#5a6672';
+  const stemLight = '#d9e3ef';
+
+  [[5,3],[6,3],[7,3],[8,3],[9,3],[10,3],[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[11,4],[3,5],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5],[12,5],[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6],[12,6],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7]].forEach(([x,y]) => px(x,y,darkBlue));
+  [[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[11,5],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7]].forEach(([x,y]) => px(x,y,midBlue));
+  [[6,4],[7,4],[8,4],[9,4],[6,5],[7,5],[8,5],[7,6],[8,6]].forEach(([x,y]) => px(x,y,lightBlue));
+  [[5,3],[6,3],[7,3],[8,3],[9,3],[10,3],[4,4],[11,4],[3,5],[12,5],[3,6],[12,6],[4,7],[11,7]].forEach(([x,y]) => px(x,y,outline));
+  [[7,8],[8,8],[7,9],[8,9],[7,10],[8,10],[7,11],[8,11],[7,12],[8,12],[7,13],[8,13]].forEach(([x,y]) => px(x,y,stemDark));
+  [[8,8],[8,9],[8,10],[8,11],[8,12],[8,13]].forEach(([x,y]) => px(x,y,stemLight));
+  [[7,8],[8,8],[7,13],[8,13]].forEach(([x,y]) => px(x,y,outline));
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+const blueMushroomTexture = makeBlueMushroomTexture();
+
+function createBlueMushroomCluster(x, z, count = 4 + Math.floor(Math.random() * 6)) {
+  for (let i = 0; i < count; i++) {
+    const mushroom = new THREE.Group();
+    const ox = (Math.random() - 0.5) * 2.4;
+    const oz = (Math.random() - 0.5) * 2.4;
+    mushroom.position.set(x + ox, 0.04, z + oz);
+
+    const scale = 0.65 + Math.random() * 0.85;
+
+    const spriteMat = new THREE.SpriteMaterial({
+      map: blueMushroomTexture,
+      transparent: true,
+      alphaTest: 0.08,
+      depthWrite: false
+    });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.center.set(0.5, 0);
+    sprite.scale.set(0.95 * scale, 1.2 * scale, 1);
+    mushroom.add(sprite);
+
+    const glowMat = new THREE.SpriteMaterial({
+      color: 0x4fb4ff,
+      transparent: true,
+      opacity: 0.13 + Math.random() * 0.06,
+      depthWrite: false
+    });
+    const glow = new THREE.Sprite(glowMat);
+    glow.center.set(0.5, 0.18);
+    glow.scale.set(1.25 * scale, 0.75 * scale, 1);
+    glow.position.y = 0.38 * scale;
+    mushroom.add(glow);
+
+    mushroom.userData.baseScale = scale;
+    mushroom.userData.phase = Math.random() * Math.PI * 2;
+    mushroom.userData.glow = glow;
+    mushroom.userData.sprite = sprite;
+
+    scene.add(mushroom);
+    blueMushrooms.push(mushroom);
+  }
+}
+
+for (let i = 0; i < 160; i++) {
+  createBlueMushroomCluster(
+    (Math.random() - 0.5) * 130,
+    (Math.random() - 0.5) * 130,
+    3 + Math.floor(Math.random() * 7)
+  );
+}
+
+
+
+
+// Tall + giant tree variants
+function createTallTree(x, z) {
+  const tree = new THREE.Group();
+  tree.position.set(x, 0, z);
+
+  const trunkColor = 0x1a0d00;
+
+  const isGiant = Math.random() > 0.92;
+  const scale = isGiant ? (3.5 + Math.random()*2.5) : (1.8 + Math.random()*1.8);
+
+  const trunkHeight = 10 * scale;
+  const trunkWidth = 0.5 * scale;
+
+  function block(px, py, pz, sx, sy, sz) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(sx, sy, sz),
+      new THREE.MeshBasicMaterial({ color: trunkColor })
+    );
+    mesh.position.set(px, py, pz);
+    tree.add(mesh);
+  }
+
+  // trunk
+  block(0, trunkHeight * 0.5, 0, trunkWidth, trunkHeight, trunkWidth);
+
+  // long twisted upper structure
+  let currentY = trunkHeight * 0.8;
+  let offsetX = 0;
+
+  for (let i = 0; i < 5 + Math.floor(Math.random()*4); i++) {
+    const segHeight = 1.2 * scale;
+    offsetX += (Math.random() - 0.5) * 0.4 * scale;
+
+    block(offsetX, currentY, 0, 0.25 * scale, segHeight, 0.25 * scale);
+
+    // branch arms
+    if (Math.random() > 0.4) {
+      const branchLen = 1.5 * scale + Math.random()*1.5 * scale;
+      block(offsetX + branchLen * 0.5, currentY, 0, branchLen, 0.15 * scale, 0.15 * scale);
+    }
+
+    currentY += segHeight;
+  }
+
+  tree.rotation.y = Math.random() * Math.PI * 2;
+  tree.rotation.z = (Math.random() - 0.5) * 0.1;
+
+  scene.add(tree);
+}
+
+// scatter taller trees (rarer than normal trees)
+for (let i = 0; i < 60; i++) {
+  createTallTree(
+    (Math.random() - 0.5) * 180,
+    (Math.random() - 0.5) * 180
+  );
 }
 
 
@@ -734,18 +875,80 @@ const capLinks = [
   "https://ratcaps.myshopify.com/products/ratbow1?variant=53085458497830"
 ];
 
-const isTouchDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
-const hudHint = document.getElementById("hudHint");
-const lookZone = document.getElementById("lookZone");
-const intro = document.getElementById("gameIntro");
-const startBtn = document.getElementById("startBtn");
 
-function updateHudHint() {
-  hudHint.textContent = isTouchDevice
-    ? "DRAG TO LOOK • USE ARROWS TO MOVE • TAP OBJECTS"
-    : "WASD TO MOVE • MOUSE TO LOOK • CLICK OBJECTS";
+// --------------------
+// FOOTSTEP CRUNCH AUDIO
+// --------------------
+let audioCtx = null;
+let masterGain = null;
+let lastFootstepTime = 0;
+let footstepToggle = false;
+let lastCameraPos = new THREE.Vector3();
+let hasLastCameraPos = false;
+
+function initAudio() {
+  if (audioCtx) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+
+  audioCtx = new AC();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.22;
+  masterGain.connect(audioCtx.destination);
 }
-updateHudHint();
+
+async function unlockAudio() {
+  initAudio();
+  if (audioCtx && audioCtx.state === "suspended") {
+    try { await audioCtx.resume(); } catch (e) {}
+  }
+}
+
+function playCrunchFootstep(intensity = 1) {
+  if (!audioCtx || !masterGain) return;
+  const now = audioCtx.currentTime;
+  const duration = 0.11 + Math.random() * 0.05;
+
+  const bufferSize = Math.max(1, Math.floor(audioCtx.sampleRate * duration));
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    const t = i / bufferSize;
+    const envelope = Math.pow(1 - t, 2.2);
+    const grit = (Math.random() * 2 - 1) * envelope;
+    const pebble = Math.sin(i * (0.055 + (footstepToggle ? 0.012 : 0.018))) * 0.15 * envelope;
+    data[i] = (grit * 0.9 + pebble) * intensity;
+  }
+
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.setValueAtTime(450 + Math.random() * 180, now);
+  hp.Q.setValueAtTime(0.8, now);
+
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.setValueAtTime((footstepToggle ? 1100 : 1450) + Math.random() * 220, now);
+  bp.Q.setValueAtTime(0.7, now);
+
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.18 * intensity, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+  source.connect(hp);
+  hp.connect(bp);
+  bp.connect(gain);
+  gain.connect(masterGain);
+
+  source.start(now);
+  source.stop(now + duration + 0.02);
+  footstepToggle = !footstepToggle;
+}
+
 
 // Movement
 let moveForward = false;
@@ -756,6 +959,7 @@ let yaw = 0;
 let pitch = 0;
 
 document.addEventListener("keydown", (e) => {
+  unlockAudio();
   if (e.code === "KeyW") moveForward = true;
   if (e.code === "KeyS") moveBackward = true;
   if (e.code === "KeyA") moveLeft = true;
@@ -769,74 +973,27 @@ document.addEventListener("keyup", (e) => {
   if (e.code === "KeyD") moveRight = false;
 });
 
-function setMoveState(direction, active) {
-  if (direction === "forward") moveForward = active;
-  if (direction === "back") moveBackward = active;
-  if (direction === "left") moveLeft = active;
-  if (direction === "right") moveRight = active;
-}
-
-document.querySelectorAll(".mobile-btn").forEach((btn) => {
-  const direction = btn.dataset.move;
-  btn.addEventListener("touchstart", (e) => {
-    e.stopPropagation();
-    setMoveState(direction, true);
-  }, { passive: true });
-  btn.addEventListener("touchend", (e) => {
-    e.stopPropagation();
-    setMoveState(direction, false);
-  }, { passive: true });
-  btn.addEventListener("touchcancel", () => setMoveState(direction, false), { passive: true });
-});
-
 document.addEventListener("click", () => {
-  if (!isTouchDevice && document.body.requestPointerLock) {
-    document.body.requestPointerLock();
-  }
+  unlockAudio();
+  document.body.requestPointerLock();
 });
 
 document.addEventListener("mousemove", (e) => {
-  if (!isTouchDevice && document.pointerLockElement === document.body) {
+  if (document.pointerLockElement === document.body) {
     yaw -= e.movementX * 0.002;
     pitch -= e.movementY * 0.002;
     pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
   }
 });
 
-if (isTouchDevice && lookZone) {
-  let lastTouchX = null;
-  let lastTouchY = null;
-
-  lookZone.addEventListener("touchstart", (e) => {
-    const t = e.touches[0];
-    lastTouchX = t.clientX;
-    lastTouchY = t.clientY;
-  }, { passive: true });
-
-  lookZone.addEventListener("touchmove", (e) => {
-    const t = e.touches[0];
-    if (lastTouchX !== null && lastTouchY !== null) {
-      yaw -= (t.clientX - lastTouchX) * 0.004;
-      pitch -= (t.clientY - lastTouchY) * 0.004;
-      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-    }
-    lastTouchX = t.clientX;
-    lastTouchY = t.clientY;
-  }, { passive: true });
-
-  lookZone.addEventListener("touchend", () => {
-    lastTouchX = null;
-    lastTouchY = null;
-  }, { passive: true });
-}
-
-// Click / tap portals
+// Click caps
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-function handlePortalActivation(clientX, clientY) {
-  mouse.x = (clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+window.addEventListener("mousedown", async (event) => {
+  unlockAudio();
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
 
@@ -853,16 +1010,7 @@ function handlePortalActivation(clientX, clientY) {
       window.location.href = capLinks[clickedIndex];
     }
   }
-}
-
-window.addEventListener("mousedown", (event) => {
-  handlePortalActivation(event.clientX, event.clientY);
 });
-
-window.addEventListener("touchend", (event) => {
-  const t = event.changedTouches[0];
-  if (t) handlePortalActivation(t.clientX, t.clientY);
-}, { passive: true });
 
 // Animate
 function animate() {
@@ -871,6 +1019,9 @@ function animate() {
   const speed = 0.15;
   const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
   const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+
+  const wasMoving =
+    moveForward || moveBackward || moveLeft || moveRight;
 
   if (moveForward) camera.position.addScaledVector(forward, -speed);
   if (moveBackward) camera.position.addScaledVector(forward, speed);
@@ -882,6 +1033,29 @@ function animate() {
   camera.rotation.x = pitch;
   camera.position.y = 2 + Math.sin(Date.now() * 0.0005) * 0.2;
 
+  if (!hasLastCameraPos) {
+    lastCameraPos.copy(camera.position);
+    hasLastCameraPos = true;
+  }
+
+  const planarStepDistance = Math.hypot(
+    camera.position.x - lastCameraPos.x,
+    camera.position.z - lastCameraPos.z
+  );
+
+  const nowMs = performance.now();
+  if (
+    wasMoving &&
+    planarStepDistance > 0.01 &&
+    nowMs - lastFootstepTime > 260
+  ) {
+    const intensity = Math.min(1.25, 0.8 + planarStepDistance * 7.0);
+    playCrunchFootstep(intensity);
+    lastFootstepTime = nowMs;
+  }
+
+  lastCameraPos.copy(camera.position);
+
   const t = Date.now() * 0.002;
   caps.forEach((cap, i) => {
     cap.lookAt(camera.position.x, cap.position.y, camera.position.z);
@@ -891,6 +1065,16 @@ function animate() {
   const ft = Date.now() * 0.0015;
   flowers.forEach((flower, i) => {
     flower.rotation.z = Math.sin(ft + i * 0.35) * 0.03;
+  });
+
+  const mt = Date.now() * 0.0016;
+  blueMushrooms.forEach((mushroom, i) => {
+    const phase = mt + mushroom.userData.phase + i * 0.03;
+    const pulse = 1 + Math.sin(phase * 2.4) * 0.06;
+    mushroom.userData.sprite.scale.set(0.95 * mushroom.userData.baseScale * pulse, 1.2 * mushroom.userData.baseScale * pulse, 1);
+    mushroom.userData.glow.scale.set(1.25 * mushroom.userData.baseScale * pulse, 0.75 * mushroom.userData.baseScale * pulse, 1);
+    mushroom.userData.glow.material.opacity = 0.11 + (Math.sin(phase * 2.4) * 0.5 + 0.5) * 0.1;
+    mushroom.lookAt(camera.position.x, mushroom.position.y + 0.45, camera.position.z);
   });
 
   const skt = Date.now() * 0.0012;
@@ -961,22 +1145,20 @@ renderer.render(scene, camera);
 
 animate();
 
-function resizeScene() {
+window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-}
+});
 
-window.addEventListener("resize", resizeScene);
-window.addEventListener("orientationchange", () => setTimeout(resizeScene, 120));
-resizeScene();
+const intro = document.getElementById("gameIntro");
+const startBtn = document.getElementById("startBtn");
 
-startBtn.addEventListener("click", () => {
+startBtn.addEventListener("click", async () => {
+  await unlockAudio();
   intro.style.display = "none";
-  if (!isTouchDevice && document.body.requestPointerLock) {
-    document.body.requestPointerLock();
-  }
+  if (forestTopBanner) forestTopBanner.style.display = "block";
+  document.body.requestPointerLock();
 });
 
 </script>
