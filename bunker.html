@@ -424,6 +424,38 @@ const obj=new THREE.Mesh(new THREE.PlaneGeometry(5.5,7.35),new THREE.MeshBasicMa
 const l=new THREE.PointLight(0xffff00,2.1,10);l.position.set(0,4.75,-10.9);scene.add(l);animated.push({isSigilGlow:true,mesh:halo,light:l});}
 function buildShopPortal(){/* details already built in chamber */}
 function buildParticles(){const geo=new THREE.BufferGeometry(),count=180,pos=new Float32Array(count*3);for(let i=0;i<count;i++){pos[i*3]=-14+Math.random()*28;pos[i*3+1]=.2+Math.random()*9;pos[i*3+2]=-14+Math.random()*28}geo.setAttribute('position',new THREE.BufferAttribute(pos,3));const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0x8c8c55,size:.035,transparent:true,opacity:.42}));pts.userData.dust=true;scene.add(pts);animated.push(pts)}
+
+function openNearestPortalFromTap(clientX, clientY){
+ if(!started || !camera || !scene || !renderer) return false;
+ if(modal && modal.style.display==="flex") return false;
+
+ const mouse = new THREE.Vector2(
+   (clientX / window.innerWidth) * 2 - 1,
+   -(clientY / window.innerHeight) * 2 + 1
+ );
+
+ const raycaster = new THREE.Raycaster();
+ raycaster.setFromCamera(mouse, camera);
+ const hits = raycaster.intersectObjects(interactables, true);
+
+ if(hits && hits.length){
+   let obj = hits[0].object;
+   while(obj && (!obj.userData || !obj.userData.url) && obj.parent){
+     obj = obj.parent;
+   }
+   if(obj && obj.userData && obj.userData.url){
+     nearest = obj;
+     activePortalURL = obj.userData.url;
+     modalTitle.textContent = obj.userData.title || "PORTAL";
+     modalText.textContent = obj.userData.text || "Enter portal.";
+     modalPortal.href = activePortalURL;
+     modal.style.display = "flex";
+     return true;
+   }
+ }
+ return false;
+}
+
 function bind(){
 
 // Bunker RWD arrow pad: touch/pointer buttons map to WASD movement.
@@ -456,12 +488,19 @@ document.querySelectorAll(".mobile-btn").forEach(btn=>{
   btn.addEventListener("pointerleave",up);
 });
 
-// Full-screen look zone stays behind the arrow pad.
+
 if(lookZone){
+  let mobileTapStart = null;
+  let mobileMoved = false;
+
   lookZone.addEventListener("touchstart",(e)=>{
     if(modal && modal.style.display==="flex")return;
     const t=e.touches&&e.touches[0];
-    if(t)touchLook={x:t.clientX,y:t.clientY};
+    if(t){
+      touchLook={x:t.clientX,y:t.clientY};
+      mobileTapStart={x:t.clientX,y:t.clientY,time:Date.now()};
+      mobileMoved=false;
+    }
   },{passive:false});
 
   lookZone.addEventListener("touchmove",(e)=>{
@@ -471,15 +510,38 @@ if(lookZone){
     e.preventDefault();
     const dx=t.clientX-touchLook.x;
     const dy=t.clientY-touchLook.y;
+
+    if(mobileTapStart){
+      const totalDx=t.clientX-mobileTapStart.x;
+      const totalDy=t.clientY-mobileTapStart.y;
+      if(Math.sqrt(totalDx*totalDx+totalDy*totalDy)>10) mobileMoved=true;
+    }
+
     yaw-=dx*.004;
     pitch-=dy*.004;
     pitch=Math.max(-1.2,Math.min(1.2,pitch));
     touchLook={x:t.clientX,y:t.clientY};
   },{passive:false});
 
-  lookZone.addEventListener("touchend",()=>touchLook=null,{passive:true});
-  lookZone.addEventListener("touchcancel",()=>touchLook=null,{passive:true});
+  lookZone.addEventListener("touchend",(e)=>{
+    const t=e.changedTouches&&e.changedTouches[0];
+    if(t && mobileTapStart && !mobileMoved && Date.now()-mobileTapStart.time<450){
+      e.preventDefault();
+      e.stopPropagation();
+      openNearestPortalFromTap(t.clientX,t.clientY);
+    }
+    touchLook=null;
+    mobileTapStart=null;
+    mobileMoved=false;
+  },{passive:false});
+
+  lookZone.addEventListener("touchcancel",()=>{
+    touchLook=null;
+    mobileTapStart=null;
+    mobileMoved=false;
+  },{passive:true});
 }
+
 
 
 
