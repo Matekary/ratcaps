@@ -129,12 +129,49 @@ body.bunker-started .mobile-move-pad{
   pointer-events:auto;
 }
 
+
+/* === PHONE PORTAL BUTTON FIX === */
+#mobilePortalButton{
+  position:fixed;
+  right:max(14px,env(safe-area-inset-right));
+  bottom:max(22px,env(safe-area-inset-bottom));
+  z-index:80;
+  display:none;
+  pointer-events:auto;
+  font-family:"Courier New",monospace;
+  font-weight:bold;
+  letter-spacing:1px;
+  color:#000;
+  background:#ffff00;
+  border:2px solid #ffff00;
+  box-shadow:0 0 18px rgba(255,255,0,.75);
+  padding:13px 16px;
+  border-radius:12px;
+  min-height:52px;
+  max-width:min(44vw,190px);
+}
+#mobilePortalButton:active{
+  transform:scale(.96);
+  background:#39ff14;
+  border-color:#39ff14;
+}
+@media (hover:none),(pointer:coarse){
+  body.bunker-started #mobilePortalButton.ready{
+    display:block;
+  }
+}
+@media (min-width:701px) and (max-width:980px){
+  body.bunker-started #mobilePortalButton.ready{
+    display:block;
+  }
+}
+
 </style>
 </head>
 <body>
 <div id="enterScreen"><div id="enterBox"><h1>ABANDONED  BUNKER</h1><p>MOVE : WASD<br>LOOK : MOUSE / DRAG<br>CLICK OBJECTS : ENTER PORTALS</p><button id="enterButton">ENTER THE BUNKER</button></div></div>
 <div id="hud">MOVE : WASD &nbsp; / &nbsp; LOOK : MOUSE &nbsp; / &nbsp; CLICK OBJECTS : ENTER PORTALS</div>
-<div id="reticle"></div><div id="ladderPrompt">↑ BACK TO FOREST</div><div id="interact">CLICK TO TOUCH THE BUNKER SIGIL</div>
+<div id="reticle"></div><div id="ladderPrompt">↑ BACK TO FOREST</div><div id="interact">CLICK TO TOUCH THE BUNKER SIGIL</div><button id="mobilePortalButton" type="button">ENTER PORTAL</button>
 
 
 <div id="mobileControls" aria-hidden="true">
@@ -157,7 +194,7 @@ body.bunker-started .mobile-move-pad{
 document.body.classList.remove("bunker-started");
 const FOREST_URL="index.html", CHANGING_ROOM_URL="changing-room.html", SHOP_URL="https://ratcaps.myshopify.com/";
 let scene,camera,renderer,clock,yaw=0,pitch=0,started=false,touchLook=null,nearest=null,activePortalURL=null;const keys={},interactables=[],animated=[];
-const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone");
+const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone"),mobilePortalButton=$("mobilePortalButton");
 setTimeout(()=>setMobileControlsActive(false),0);
 
 if(enterButton){
@@ -456,7 +493,45 @@ function openNearestPortalFromTap(clientX, clientY){
  return false;
 }
 
+
+function openCurrentNearestPortal(){
+  if(!started || !nearest || !nearest.userData || !nearest.userData.url) return false;
+  activePortalURL = nearest.userData.url;
+  modalTitle.textContent = nearest.userData.title || "PORTAL";
+  modalText.textContent = nearest.userData.text || "Enter portal.";
+  modalPortal.href = activePortalURL;
+  modal.style.display = "flex";
+  return true;
+}
+
+function navigateCurrentNearestPortal(){
+  if(!started || !nearest || !nearest.userData || !nearest.userData.url) return false;
+  window.location.href = nearest.userData.url;
+  return true;
+}
+
 function bind(){
+
+window.addEventListener("keydown",(e)=>{
+  if(e.key && e.key.toLowerCase()==="e"){
+    openCurrentNearestPortal();
+  }
+});
+
+
+if(mobilePortalButton){
+  mobilePortalButton.addEventListener("touchstart",(e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    openCurrentNearestPortal();
+  },{passive:false});
+  mobilePortalButton.addEventListener("click",(e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    openCurrentNearestPortal();
+  });
+}
+
 
 // Bunker RWD arrow pad: touch/pointer buttons map to WASD movement.
 document.querySelectorAll(".mobile-btn").forEach(btn=>{
