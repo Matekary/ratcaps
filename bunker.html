@@ -8,7 +8,7 @@
 :root{--acid:#ffff00;--amber:#ff9900;--dark:#050509;}
 html,body{margin:0;width:100%;height:100%;min-height:100dvh;overflow:hidden;background:#050509;color:#eee;font-family:"Courier New",monospace;touch-action:none;overscroll-behavior:none;}
 canvas{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixelated;}
-#enterScreen{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;background:radial-gradient(circle at 50% 45%,rgba(255,255,0,.12),transparent 30%),linear-gradient(180deg,#07070b,#111016 60%,#030306);} 
+#enterScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;background:radial-gradient(circle at 50% 45%,rgba(255,255,0,.12),transparent 30%),linear-gradient(180deg,#07070b,#111016 60%,#030306);} 
 #enterBox{max-width:780px;border:3px solid #777;outline:2px solid #09090d;background:rgba(7,7,11,.9);box-shadow:0 0 34px rgba(255,255,0,.18),inset 0 0 45px rgba(90,255,0,.08);padding:24px;}
 #enterBox h1{margin:0 0 12px;font-size:clamp(24px,6vw,54px);letter-spacing:3px;color:#d7d7d7;text-shadow:4px 4px #000,0 0 18px var(--acid);} 
 #enterBox p{font-size:clamp(14px,2.8vw,20px);line-height:1.45;margin:10px 0;}
@@ -88,7 +88,7 @@ canvas{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixe
 .mobile-back{grid-column:2;grid-row:3;}
 
 @media (hover:none),(pointer:coarse){
-  #mobileControls{display:block;}
+  body.bunker-started #mobileControls{display:block;}
   #hud{top:max(8px,env(safe-area-inset-top));font-size:clamp(9px,2.8vw,13px);padding:7px 8px;width:calc(100vw - 18px);}
 }
 
@@ -106,7 +106,7 @@ canvas{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixe
 }
 
 @media (min-width:701px) and (max-width:980px){
-  #mobileControls{display:block;}
+  body.bunker-started #mobileControls{display:block;}
 }
 
 @media (max-height:520px){
@@ -114,6 +114,20 @@ canvas{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixe
   #hud{display:none!important;}
 }
 /* === END BUNKER RWD ARROW PAD === */
+
+
+/* controller appears only after bunker has started */
+body:not(.bunker-started) #mobileControls{
+  display:none!important;
+  pointer-events:none!important;
+}
+body.bunker-started #mobileControls{
+  pointer-events:none;
+}
+body.bunker-started .mobile-look-zone,
+body.bunker-started .mobile-move-pad{
+  pointer-events:auto;
+}
 
 </style>
 </head>
@@ -140,9 +154,11 @@ canvas{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixe
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (()=>{
+document.body.classList.remove("bunker-started");
 const FOREST_URL="index.html", CHANGING_ROOM_URL="changing-room.html", SHOP_URL="https://ratcaps.myshopify.com/";
 let scene,camera,renderer,clock,yaw=0,pitch=0,started=false,touchLook=null,nearest=null,activePortalURL=null;const keys={},interactables=[],animated=[];
 const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone");
+setTimeout(()=>setMobileControlsActive(false),0);
 
 if(enterButton){
  enterButton.onclick=startBunkerGame;
@@ -157,9 +173,20 @@ const floorTex=pixelTexture((ctx,w,h)=>{ctx.fillStyle="#27282b";ctx.fillRect(0,0
 function box(w,h,d,x,y,z,m,parent=scene){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
 function cyl(r,h,x,y,z,m,seg=6,parent=scene){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m);mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
 
+
+function setMobileControlsActive(active){
+ const mc=document.getElementById("mobileControls");
+ if(mc){
+   mc.style.display = active ? "" : "none";
+   mc.style.pointerEvents = active ? "none" : "none";
+ }
+}
+
 function startBunkerGame(e){
  if(e){e.preventDefault();e.stopPropagation();}
  started=true;
+ document.body.classList.add("bunker-started");
+ setMobileControlsActive(true);
  if(enterScreen){enterScreen.style.display="none";enterScreen.style.pointerEvents="none";}
  if(hud)hud.style.display="block";
  if(reticle)reticle.style.display="block";
