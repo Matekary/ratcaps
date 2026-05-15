@@ -137,6 +137,34 @@ body.bunker-started #mobileControls{pointer-events:none;}
 body.bunker-started .mobile-look-zone{pointer-events:auto;}
 body.bunker-started .mobile-move-pad{pointer-events:auto;}
 
+
+/* === MODAL ENTER PORTAL PHONE FIX === */
+#objectModal{
+  z-index:10000!important;
+  pointer-events:auto!important;
+}
+#modalBox{
+  pointer-events:auto!important;
+}
+#modalPortal{
+  position:relative;
+  z-index:10002!important;
+  pointer-events:auto!important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(255,255,0,.35);
+}
+#modalClose{
+  position:relative;
+  z-index:10002!important;
+  pointer-events:auto!important;
+  touch-action:manipulation;
+}
+body.modal-open #mobileControls,
+body.modal-open .mobile-look-zone,
+body.modal-open .mobile-move-pad{
+  pointer-events:none!important;
+}
+
 </style>
 </head>
 <body>
@@ -164,7 +192,7 @@ body.bunker-started .mobile-move-pad{pointer-events:auto;}
 (()=>{
 document.body.classList.remove("bunker-started");
 const FOREST_URL="index.html", CHANGING_ROOM_URL="changing-room.html", SHOP_URL="https://ratcaps.myshopify.com/";
-let scene,camera,renderer,clock,yaw=0,pitch=0,started=false,touchLook=null,nearest=null,activePortalURL=null;const keys={},interactables=[],animated=[];
+let scene,camera,renderer,clock,yaw=0,pitch=0,started=false,touchLook=null,nearest=null,activePortalURL=null; window.__activePortalURL=null;const keys={},interactables=[],animated=[];
 const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone");
 setTimeout(()=>setMobileControlsActive(false),0);
 
@@ -198,7 +226,7 @@ function startBunkerGame(e){
  if(enterScreen){enterScreen.style.display="none";enterScreen.style.pointerEvents="none";}
  if(hud)hud.style.display="block";
  if(reticle)reticle.style.display="block";
- if(modal)modal.style.display="none";
+ if(modal)modal.style.display="none"; document.body.classList.remove("modal-open");
  setTimeout(()=>{try{if(renderer&&renderer.domElement&&renderer.domElement.requestPointerLock){renderer.domElement.requestPointerLock();}}catch(err){}},30);
 }
 
@@ -464,16 +492,106 @@ function openPortalAtScreenPoint(clientX, clientY){
   if(!obj || !obj.userData || !obj.userData.url) return false;
 
   nearest = obj;
-  activePortalURL = obj.userData.url;
+  activePortalURL = obj.userData.url; window.__activePortalURL = activePortalURL;
 
   modalTitle.textContent = obj.userData.title || "PORTAL";
   modalText.textContent = obj.userData.text || "Enter portal.";
   modalPortal.href = activePortalURL;
-  modal.style.display = "flex";
+  modal.style.display = "flex"; document.body.classList.add("modal-open");
   return true;
 }
 
+
+function openChangingRoomPortalDirectly(){
+  activePortalURL = CHANGING_ROOM_URL; window.__activePortalURL = activePortalURL;
+  modalTitle.textContent = "CHANGING ROOM PORTAL";
+  modalText.textContent = "A cracked doorway opens toward the changing room.";
+  modalPortal.href = CHANGING_ROOM_URL;
+  modal.style.display = "flex"; document.body.classList.add("modal-open");
+  return true;
+}
+
+function checkChangingRoomPortalDistance(){
+  if(!started || !camera) return false;
+  const dx = camera.position.x - (-8.7);
+  const dz = camera.position.z - (-13.35);
+  return Math.sqrt(dx*dx + dz*dz) < 4.6;
+}
+
 function bind(){
+
+function enterActivePortalFromModal(e){
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const target =
+    activePortalURL ||
+    window.__activePortalURL ||
+    (nearest && nearest.userData && nearest.userData.url) ||
+    modalPortal.getAttribute("href");
+
+  if(target && target !== "#"){
+    window.location.href = target;
+    return true;
+  }
+  return false;
+}
+
+modalPortal.setAttribute("role","button");
+modalPortal.setAttribute("tabindex","0");
+
+modalPortal.addEventListener("touchstart",(e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+},{passive:false});
+
+modalPortal.addEventListener("touchend",(e)=>{
+  enterActivePortalFromModal(e);
+},{passive:false});
+
+modalPortal.addEventListener("click",(e)=>{
+  enterActivePortalFromModal(e);
+});
+
+modalPortal.addEventListener("pointerup",(e)=>{
+  enterActivePortalFromModal(e);
+});
+
+modalPortal.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter" || e.key===" "){
+    enterActivePortalFromModal(e);
+  }
+});
+
+
+
+
+
+// Direct fallback for changing-room portal on phones/tablets
+window.addEventListener("touchend",(e)=>{
+  if(!started) return;
+  if(modal && modal.style.display==="flex") return;
+  const t=e.changedTouches && e.changedTouches[0];
+  if(!t) return;
+  if(checkChangingRoomPortalDistance()){
+    e.preventDefault();
+    e.stopPropagation();
+    openChangingRoomPortalDirectly();
+  }
+},{passive:false,capture:true});
+
+window.addEventListener("click",(e)=>{
+  if(!started) return;
+  if(modal && modal.style.display==="flex") return;
+  if(checkChangingRoomPortalDistance()){
+    e.preventDefault();
+    e.stopPropagation();
+    openChangingRoomPortalDirectly();
+  }
+},true);
+
 
 // SIMPLE RWD CLICK/TAP TO ENTER PORTAL
 window.addEventListener("click",(e)=>{
@@ -496,13 +614,7 @@ window.addEventListener("touchend",(e)=>{
   }
 }, {passive:false, capture:true});
 
-modalPortal.addEventListener("click",(e)=>{
-  const target = activePortalURL || modalPortal.getAttribute("href");
-  if(target && target !== "#"){
-    e.preventDefault();
-    window.location.href = target;
-  }
-});
+
 
 
 window.addEventListener("keydown",(e)=>{
@@ -649,12 +761,12 @@ if(typeof ladderPrompt!=="undefined" && ladderPrompt){
   if(started) window.location.href=FOREST_URL;
  });
 }
-window.addEventListener('resize',onResize);document.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);document.addEventListener('mousemove',onMouseMove);document.addEventListener('click',onClick);renderer.domElement.addEventListener('touchstart',onTouchStart,{passive:false});renderer.domElement.addEventListener('touchmove',onTouchMove,{passive:false});renderer.domElement.addEventListener('touchend',()=>touchLook=null);modalClose.onclick=()=>modal.style.display='none'}
+window.addEventListener('resize',onResize);document.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);document.addEventListener('mousemove',onMouseMove);document.addEventListener('click',onClick);renderer.domElement.addEventListener('touchstart',onTouchStart,{passive:false});renderer.domElement.addEventListener('touchmove',onTouchMove,{passive:false});renderer.domElement.addEventListener('touchend',()=>touchLook=null);modalClose.onclick=()=>modal.style.display='none'; document.body.classList.remove('modal-open')}
 function onResize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}
 function onMouseMove(e){if(!started||modal.style.display==='flex')return;if(document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0025;pitch-=e.movementY*.0025;pitch=Math.max(-1.25,Math.min(1.25,pitch))}}
 function onTouchStart(e){if(!started)return;e.preventDefault();const t=e.touches[0];touchLook={x:t.clientX,y:t.clientY}}
 function onTouchMove(e){if(!touchLook||modal.style.display==='flex')return;e.preventDefault();const t=e.touches[0];yaw-=(t.clientX-touchLook.x)*.006;pitch-=(t.clientY-touchLook.y)*.006;pitch=Math.max(-1.2,Math.min(1.2,pitch));touchLook={x:t.clientX,y:t.clientY}}
-function onClick(){if(!started){return}if(modal.style.display==='flex')return;if(nearest){modalTitle.textContent=nearest.userData.title;modalText.textContent=nearest.userData.text;activePortalURL=nearest.userData.url;modalPortal.href=activePortalURL;if(nearest.userData.url==="#")modalPortal.style.display='none';else modalPortal.style.display='inline-block';modal.style.display='flex';return}if(document.pointerLockElement!==renderer.domElement&&window.matchMedia('(pointer:fine)').matches)renderer.domElement.requestPointerLock?.()}
+function onClick(){if(!started){return}if(modal.style.display==='flex')return;if(nearest){modalTitle.textContent=nearest.userData.title;modalText.textContent=nearest.userData.text;activePortalURL=nearest.userData.url;modalPortal.href=activePortalURL;if(nearest.userData.url==="#")modalPortal.style.display='none';else modalPortal.style.display='inline-block';modal.style.display='flex'; document.body.classList.add('modal-open');return}if(document.pointerLockElement!==renderer.domElement&&window.matchMedia('(pointer:fine)').matches)renderer.domElement.requestPointerLock?.()}
 function update(dt,t){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;const dir=new THREE.Vector3((keys.d?1:0)-(keys.a?1:0),0,(keys.w?1:0)-(keys.s?1:0));if(dir.lengthSq()>0)dir.normalize();const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)*-1),right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));camera.position.addScaledVector(forward,dir.z*dt*5.2);camera.position.addScaledVector(right,dir.x*dt*5.2);camera.position.x=Math.max(-12.6,Math.min(12.6,camera.position.x));camera.position.z=Math.max(-12.4,Math.min(12.4,camera.position.z));camera.position.y=2.2+Math.sin(t*2.2)*.025*(dir.lengthSq()>0?1:0);
 nearest=null;let nd=999;for(const obj of interactables){const d=obj.position.distanceTo(camera.position);obj.material.opacity=(obj.userData.baseOpacity||.35)+Math.sin(t*2+obj.userData.pulse)*.05;if(d<5.1&&d<nd){nearest=obj;nd=d}}interactPrompt.style.display=nearest?'block':'none';interactPrompt.textContent=nearest?`CLICK TO TOUCH THE ${nearest.userData.title}`:'';for(const a of animated){if(a.isSigilGlow){a.mesh.material.opacity=.11+Math.sin(t*2.4)*.045;a.light.intensity=1.75+Math.sin(t*2.4)*.35}else if(a.userData?.dust){a.rotation.y+=dt*.025}else if(a.isPointLight){a.intensity=.95+Math.sin(t*8+a.position.x)*.25}else if(a.isMesh){a.scale.y=1+Math.sin(t*9+a.position.x)*.08}}}
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;if(started)update(dt,t);renderer.render(scene,camera)}
