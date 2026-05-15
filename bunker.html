@@ -130,48 +130,19 @@ body.bunker-started .mobile-move-pad{
 }
 
 
-/* === PHONE PORTAL BUTTON FIX === */
-#mobilePortalButton{
-  position:fixed;
-  right:max(14px,env(safe-area-inset-right));
-  bottom:max(22px,env(safe-area-inset-bottom));
-  z-index:80;
-  display:none;
-  pointer-events:auto;
-  font-family:"Courier New",monospace;
-  font-weight:bold;
-  letter-spacing:1px;
-  color:#000;
-  background:#ffff00;
-  border:2px solid #ffff00;
-  box-shadow:0 0 18px rgba(255,255,0,.75);
-  padding:13px 16px;
-  border-radius:12px;
-  min-height:52px;
-  max-width:min(44vw,190px);
-}
-#mobilePortalButton:active{
-  transform:scale(.96);
-  background:#39ff14;
-  border-color:#39ff14;
-}
-@media (hover:none),(pointer:coarse){
-  body.bunker-started #mobilePortalButton.ready{
-    display:block;
-  }
-}
-@media (min-width:701px) and (max-width:980px){
-  body.bunker-started #mobilePortalButton.ready{
-    display:block;
-  }
-}
+
+/* simple phone portal tapping */
+body:not(.bunker-started) #mobileControls{display:none!important;pointer-events:none!important;}
+body.bunker-started #mobileControls{pointer-events:none;}
+body.bunker-started .mobile-look-zone{pointer-events:auto;}
+body.bunker-started .mobile-move-pad{pointer-events:auto;}
 
 </style>
 </head>
 <body>
 <div id="enterScreen"><div id="enterBox"><h1>ABANDONED  BUNKER</h1><p>MOVE : WASD<br>LOOK : MOUSE / DRAG<br>CLICK OBJECTS : ENTER PORTALS</p><button id="enterButton">ENTER THE BUNKER</button></div></div>
 <div id="hud">MOVE : WASD &nbsp; / &nbsp; LOOK : MOUSE &nbsp; / &nbsp; CLICK OBJECTS : ENTER PORTALS</div>
-<div id="reticle"></div><div id="ladderPrompt">↑ BACK TO FOREST</div><div id="interact">CLICK TO TOUCH THE BUNKER SIGIL</div><button id="mobilePortalButton" type="button">ENTER PORTAL</button>
+<div id="reticle"></div><div id="ladderPrompt">↑ BACK TO FOREST</div><div id="interact">CLICK TO TOUCH THE BUNKER SIGIL</div>
 
 
 <div id="mobileControls" aria-hidden="true">
@@ -194,7 +165,7 @@ body.bunker-started .mobile-move-pad{
 document.body.classList.remove("bunker-started");
 const FOREST_URL="index.html", CHANGING_ROOM_URL="changing-room.html", SHOP_URL="https://ratcaps.myshopify.com/";
 let scene,camera,renderer,clock,yaw=0,pitch=0,started=false,touchLook=null,nearest=null,activePortalURL=null;const keys={},interactables=[],animated=[];
-const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone"),mobilePortalButton=$("mobilePortalButton");
+const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone");
 setTimeout(()=>setMobileControlsActive(false),0);
 
 if(enterButton){
@@ -462,55 +433,77 @@ const l=new THREE.PointLight(0xffff00,2.1,10);l.position.set(0,4.75,-10.9);scene
 function buildShopPortal(){/* details already built in chamber */}
 function buildParticles(){const geo=new THREE.BufferGeometry(),count=180,pos=new Float32Array(count*3);for(let i=0;i<count;i++){pos[i*3]=-14+Math.random()*28;pos[i*3+1]=.2+Math.random()*9;pos[i*3+2]=-14+Math.random()*28}geo.setAttribute('position',new THREE.BufferAttribute(pos,3));const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0x8c8c55,size:.035,transparent:true,opacity:.42}));pts.userData.dust=true;scene.add(pts);animated.push(pts)}
 
-function openNearestPortalFromTap(clientX, clientY){
- if(!started || !camera || !scene || !renderer) return false;
- if(modal && modal.style.display==="flex") return false;
-
- const mouse = new THREE.Vector2(
-   (clientX / window.innerWidth) * 2 - 1,
-   -(clientY / window.innerHeight) * 2 + 1
- );
-
- const raycaster = new THREE.Raycaster();
- raycaster.setFromCamera(mouse, camera);
- const hits = raycaster.intersectObjects(interactables, true);
-
- if(hits && hits.length){
-   let obj = hits[0].object;
-   while(obj && (!obj.userData || !obj.userData.url) && obj.parent){
-     obj = obj.parent;
-   }
-   if(obj && obj.userData && obj.userData.url){
-     nearest = obj;
-     activePortalURL = obj.userData.url;
-     modalTitle.textContent = obj.userData.title || "PORTAL";
-     modalText.textContent = obj.userData.text || "Enter portal.";
-     modalPortal.href = activePortalURL;
-     modal.style.display = "flex";
-     return true;
-   }
- }
- return false;
-}
 
 
-function openCurrentNearestPortal(){
-  if(!started || !nearest || !nearest.userData || !nearest.userData.url) return false;
-  activePortalURL = nearest.userData.url;
-  modalTitle.textContent = nearest.userData.title || "PORTAL";
-  modalText.textContent = nearest.userData.text || "Enter portal.";
+
+
+
+
+
+
+function openPortalAtScreenPoint(clientX, clientY){
+  if(!started || !camera || !scene || !interactables || !interactables.length) return false;
+  if(modal && modal.style.display === "flex") return false;
+
+  const mouse = new THREE.Vector2(
+    (clientX / window.innerWidth) * 2 - 1,
+    -(clientY / window.innerHeight) * 2 + 1
+  );
+
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, camera);
+
+  const hits = raycaster.intersectObjects(interactables, true);
+  if(!hits.length) return false;
+
+  let obj = hits[0].object;
+  while(obj && (!obj.userData || !obj.userData.url) && obj.parent){
+    obj = obj.parent;
+  }
+
+  if(!obj || !obj.userData || !obj.userData.url) return false;
+
+  nearest = obj;
+  activePortalURL = obj.userData.url;
+
+  modalTitle.textContent = obj.userData.title || "PORTAL";
+  modalText.textContent = obj.userData.text || "Enter portal.";
   modalPortal.href = activePortalURL;
   modal.style.display = "flex";
   return true;
 }
 
-function navigateCurrentNearestPortal(){
-  if(!started || !nearest || !nearest.userData || !nearest.userData.url) return false;
-  window.location.href = nearest.userData.url;
-  return true;
-}
-
 function bind(){
+
+// SIMPLE RWD CLICK/TAP TO ENTER PORTAL
+window.addEventListener("click",(e)=>{
+  if(!started) return;
+  const clickedPortal = openPortalAtScreenPoint(e.clientX, e.clientY);
+  if(clickedPortal){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+
+window.addEventListener("touchend",(e)=>{
+  if(!started) return;
+  const t = e.changedTouches && e.changedTouches[0];
+  if(!t) return;
+  const tappedPortal = openPortalAtScreenPoint(t.clientX, t.clientY);
+  if(tappedPortal){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, {passive:false, capture:true});
+
+modalPortal.addEventListener("click",(e)=>{
+  const target = activePortalURL || modalPortal.getAttribute("href");
+  if(target && target !== "#"){
+    e.preventDefault();
+    window.location.href = target;
+  }
+});
+
 
 window.addEventListener("keydown",(e)=>{
   if(e.key && e.key.toLowerCase()==="e"){
@@ -519,18 +512,7 @@ window.addEventListener("keydown",(e)=>{
 });
 
 
-if(mobilePortalButton){
-  mobilePortalButton.addEventListener("touchstart",(e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    openCurrentNearestPortal();
-  },{passive:false});
-  mobilePortalButton.addEventListener("click",(e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    openCurrentNearestPortal();
-  });
-}
+
 
 
 // Bunker RWD arrow pad: touch/pointer buttons map to WASD movement.
@@ -564,58 +546,7 @@ document.querySelectorAll(".mobile-btn").forEach(btn=>{
 });
 
 
-if(lookZone){
-  let mobileTapStart = null;
-  let mobileMoved = false;
 
-  lookZone.addEventListener("touchstart",(e)=>{
-    if(modal && modal.style.display==="flex")return;
-    const t=e.touches&&e.touches[0];
-    if(t){
-      touchLook={x:t.clientX,y:t.clientY};
-      mobileTapStart={x:t.clientX,y:t.clientY,time:Date.now()};
-      mobileMoved=false;
-    }
-  },{passive:false});
-
-  lookZone.addEventListener("touchmove",(e)=>{
-    if(modal && modal.style.display==="flex")return;
-    const t=e.touches&&e.touches[0];
-    if(!t||!touchLook)return;
-    e.preventDefault();
-    const dx=t.clientX-touchLook.x;
-    const dy=t.clientY-touchLook.y;
-
-    if(mobileTapStart){
-      const totalDx=t.clientX-mobileTapStart.x;
-      const totalDy=t.clientY-mobileTapStart.y;
-      if(Math.sqrt(totalDx*totalDx+totalDy*totalDy)>10) mobileMoved=true;
-    }
-
-    yaw-=dx*.004;
-    pitch-=dy*.004;
-    pitch=Math.max(-1.2,Math.min(1.2,pitch));
-    touchLook={x:t.clientX,y:t.clientY};
-  },{passive:false});
-
-  lookZone.addEventListener("touchend",(e)=>{
-    const t=e.changedTouches&&e.changedTouches[0];
-    if(t && mobileTapStart && !mobileMoved && Date.now()-mobileTapStart.time<450){
-      e.preventDefault();
-      e.stopPropagation();
-      openNearestPortalFromTap(t.clientX,t.clientY);
-    }
-    touchLook=null;
-    mobileTapStart=null;
-    mobileMoved=false;
-  },{passive:false});
-
-  lookZone.addEventListener("touchcancel",()=>{
-    touchLook=null;
-    mobileTapStart=null;
-    mobileMoved=false;
-  },{passive:true});
-}
 
 
 
@@ -707,14 +638,8 @@ if(lookZone){
 }
 
 
-function forceModalPortalNavigation(e){
- const target=activePortalURL || (nearest && nearest.userData && nearest.userData.url) || modalPortal.getAttribute("href");
- if(target && target !== "#"){
-  e.preventDefault();
-  window.location.href=target;
- }
-}
-modalPortal.addEventListener("click",forceModalPortalNavigation);
+
+
 
 
 if(typeof ladderPrompt!=="undefined" && ladderPrompt){
