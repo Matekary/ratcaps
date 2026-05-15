@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
 <title>MATE SKARY — Abandoned Bunker</title>
 <style>
 :root{--acid:#ffff00;--amber:#ff9900;--dark:#050509;}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050509;color:#eee;font-family:"Courier New",monospace;touch-action:none;}
-canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated;}
+html,body{margin:0;width:100%;height:100%;min-height:100dvh;overflow:hidden;background:#050509;color:#eee;font-family:"Courier New",monospace;touch-action:none;overscroll-behavior:none;}
+canvas{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixelated;}
 #enterScreen{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;background:radial-gradient(circle at 50% 45%,rgba(255,255,0,.12),transparent 30%),linear-gradient(180deg,#07070b,#111016 60%,#030306);} 
 #enterBox{max-width:780px;border:3px solid #777;outline:2px solid #09090d;background:rgba(7,7,11,.9);box-shadow:0 0 34px rgba(255,255,0,.18),inset 0 0 45px rgba(90,255,0,.08);padding:24px;}
 #enterBox h1{margin:0 0 12px;font-size:clamp(24px,6vw,54px);letter-spacing:3px;color:#d7d7d7;text-shadow:4px 4px #000,0 0 18px var(--acid);} 
@@ -20,19 +20,115 @@ canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated;}
 #objectModal{position:fixed;inset:0;z-index:25;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.74);padding:16px;}
 #modalBox{width:min(620px,92vw);border:3px solid #9c9c9c;background:#0d0d13;color:#f2f2f2;box-shadow:0 0 35px rgba(255,255,0,.2),inset 0 0 28px rgba(123,44,255,.2);padding:18px;text-align:center;}#modalBox h2{margin:0 0 10px;color:var(--acid);text-shadow:3px 3px #000;font-size:clamp(20px,5vw,36px);}#modalBox p{line-height:1.5;font-size:clamp(13px,3vw,17px)}.modalButtons{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}.modalButtons button,.modalButtons a{font-family:inherit;font-weight:bold;text-decoration:none;color:#111;background:var(--acid);border:0;padding:10px 13px;cursor:pointer}.modalButtons button{color:#eee;background:#292933;border:1px solid #777}
 @media(max-width:700px){#hud{top:7px;padding:7px 8px}#interact{bottom:14px;width:calc(100vw - 34px)}#enterBox{padding:18px}}
+
+/* === RESPONSIVE WEB DESIGN + MOBILE CONTROLS === */
+#mobileControls{
+ position:fixed;
+ inset:0;
+ z-index:14;
+ pointer-events:none;
+ display:none;
+}
+.mobile-look-zone{
+ position:absolute;
+ inset:0;
+ pointer-events:auto;
+ touch-action:none;
+}
+.mobile-move-pad{
+ position:absolute;
+ left:max(12px,env(safe-area-inset-left));
+ bottom:max(18px,env(safe-area-inset-bottom));
+ width:min(42vw,178px);
+ height:min(42vw,178px);
+ border:2px solid rgba(255,255,0,.45);
+ background:rgba(0,0,0,.32);
+ border-radius:18px;
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ grid-template-rows:repeat(3,1fr);
+ gap:6px;
+ padding:8px;
+ pointer-events:auto;
+ box-shadow:0 0 18px rgba(255,255,0,.18);
+ backdrop-filter:blur(4px);
+}
+.mobile-btn{
+ border:1px solid rgba(255,255,0,.75);
+ background:rgba(0,0,0,.62);
+ color:#ffff00;
+ font-family:"Courier New",monospace;
+ font-weight:bold;
+ font-size:clamp(16px,4vw,24px);
+ border-radius:12px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ user-select:none;
+ -webkit-user-select:none;
+ text-shadow:0 0 8px #ffff00;
+}
+.mobile-btn:active,#enterButton:active,.modalButtons a:active,.modalButtons button:active{
+ transform:scale(.96);
+}
+.mobile-forward{grid-column:2;grid-row:1;}
+.mobile-left{grid-column:1;grid-row:2;}
+.mobile-right{grid-column:3;grid-row:2;}
+.mobile-back{grid-column:2;grid-row:3;}
+
+@media (hover:none),(pointer:coarse){
+ #mobileControls{display:block;}
+ #hud{top:max(8px,env(safe-area-inset-top));font-size:clamp(9px,2.8vw,13px);padding:7px 8px;width:calc(100vw - 18px);}
+ #reticle{display:none!important;}
+}
+
+@media(max-width:700px){
+ #enterScreen{padding:16px;}
+ #enterBox{width:min(90vw,430px);padding:20px 16px;}
+ #enterBox h1{font-size:clamp(24px,8vw,38px);letter-spacing:2px;}
+ #enterBox p{font-size:clamp(13px,3.8vw,16px);}
+ #enterButton{width:100%;min-height:54px;font-size:clamp(14px,4vw,17px);}
+ #interact{bottom:calc(14px + env(safe-area-inset-bottom));width:calc(100vw - 28px);box-sizing:border-box;font-size:clamp(11px,3.2vw,15px);}
+ #ladderPrompt{top:32%;width:min(86vw,420px);box-sizing:border-box;font-size:clamp(16px,5vw,28px);padding:12px 14px;}
+ #modalBox{width:calc(100vw - 28px);max-height:82dvh;overflow:auto;padding:16px 12px;}
+ .modalButtons{flex-direction:column;}
+ .modalButtons a,.modalButtons button{width:100%;box-sizing:border-box;min-height:48px;}
+}
+
+@media(max-height:520px){
+ #enterBox{padding:14px;}
+ #enterBox h1{font-size:clamp(20px,7vh,34px);margin-bottom:6px;}
+ #enterBox p{font-size:clamp(11px,3vh,15px);line-height:1.25;}
+ #enterButton{margin-top:10px;padding:10px 16px;}
+ #hud{display:none!important;}
+ #ladderPrompt{top:30%;}
+ #modalBox{max-height:86dvh;}
+}
+
 </style>
 </head>
 <body>
 <div id="enterScreen"><div id="enterBox"><h1>ABANDONED  BUNKER</h1><p>MOVE : WASD<br>LOOK : MOUSE / DRAG<br>CLICK OBJECTS : ENTER PORTALS</p><button id="enterButton">ENTER THE BUNKER</button></div></div>
 <div id="hud">MOVE : WASD &nbsp; / &nbsp; LOOK : MOUSE &nbsp; / &nbsp; CLICK OBJECTS : ENTER PORTALS</div>
 <div id="reticle"></div><div id="ladderPrompt">↑ BACK TO FOREST</div><div id="interact">CLICK TO TOUCH THE BUNKER SIGIL</div>
+
+<div id="mobileControls" aria-hidden="true">
+  <div class="mobile-look-zone" id="lookZone"></div>
+  <div class="mobile-move-pad">
+    <div class="mobile-btn mobile-forward" data-move="forward">▲</div>
+    <div class="mobile-btn mobile-left" data-move="left">◀</div>
+    <div class="mobile-btn mobile-right" data-move="right">▶</div>
+    <div class="mobile-btn mobile-back" data-move="back">▼</div>
+  </div>
+</div>
+
 <div id="objectModal"><div id="modalBox"><h2 id="modalTitle">BUNKER SIGIL</h2><p id="modalText">The chamber listens.</p><div class="modalButtons"><a id="modalPortal" href="#" target="_self">ENTER PORTAL</a><button id="modalClose">CLOSE</button></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (()=>{
 const FOREST_URL="index.html", CHANGING_ROOM_URL="changing-room.html", SHOP_URL="https://ratcaps.myshopify.com/";
 let scene,camera,renderer,clock,yaw=0,pitch=0,started=false,touchLook=null,nearest=null,activePortalURL=null;const keys={},interactables=[],animated=[];
-const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose");
+const $=id=>document.getElementById(id);const enterScreen=$("enterScreen"),enterButton=$("enterButton"),hud=$("hud"),reticle=$("reticle"),interactPrompt=$("interact"),ladderPrompt=$("ladderPrompt"),modal=$("objectModal"),modalTitle=$("modalTitle"),modalText=$("modalText"),modalPortal=$("modalPortal"),modalClose=$("modalClose"),lookZone=$("lookZone");
 
 if(enterButton){
  enterButton.onclick=startBunkerGame;
@@ -57,7 +153,18 @@ function startBunkerGame(e){
  setTimeout(()=>{try{if(renderer&&renderer.domElement&&renderer.domElement.requestPointerLock){renderer.domElement.requestPointerLock();}}catch(err){}},30);
 }
 
-function init(){scene=new THREE.Scene();scene.background=new THREE.Color(0x050509);scene.fog=new THREE.FogExp2(0x060608,.035);camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,1000);camera.position.set(0,2.2,9.6);renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.35));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);clock=new THREE.Clock();scene.add(new THREE.AmbientLight(0x222222,1.35));const moon=new THREE.DirectionalLight(0x8490aa,.25);moon.position.set(-5,8,8);scene.add(moon);buildChamber();buildVoxelVines();buildPipes();buildSigil();buildShopPortal();buildCeilingLadder();buildCeilingForestPortal();buildForestReturnSprite();buildParticles();bind();animate();}
+
+function resizeRendererToDisplay(){
+ if(!renderer||!camera)return;
+ const w=window.innerWidth;
+ const h=window.innerHeight;
+ camera.aspect=w/h;
+ camera.updateProjectionMatrix();
+ renderer.setSize(w,h);
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, window.innerWidth<700 ? 1.15 : 1.35));
+}
+
+function init(){scene=new THREE.Scene();scene.background=new THREE.Color(0x050509);scene.fog=new THREE.FogExp2(0x060608,.035);camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,1000);camera.position.set(0,2.2,9.6);renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.35));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);resizeRendererToDisplay();window.addEventListener("resize",resizeRendererToDisplay);window.addEventListener("orientationchange",()=>setTimeout(resizeRendererToDisplay,250));clock=new THREE.Clock();scene.add(new THREE.AmbientLight(0x222222,1.35));const moon=new THREE.DirectionalLight(0x8490aa,.25);moon.position.set(-5,8,8);scene.add(moon);buildChamber();buildVoxelVines();buildPipes();buildSigil();buildShopPortal();buildCeilingLadder();buildCeilingForestPortal();buildForestReturnSprite();buildParticles();bind();animate();}
 function buildChamber(){const sm=mat(0xffffff,{map:stoneTex,roughness:.95}),fm=mat(0xffffff,{map:floorTex,roughness:.96});sm.map.repeat.set(4,2.2);fm.map.repeat.set(7,7);box(30,1,30,0,-.55,0,fm);box(30,10,1,0,4.5,-14,sm);box(30,10,1,0,4.5,14,sm);box(1,10,30,-14,4.5,0,sm);box(1,10,30,14,4.5,0,sm);box(30,1,30,0,9.8,0,sm);
 const col=mat(0x3d3e42,{roughness:.92});for(const x of[-10,10])for(const z of[-8,7]){box(1.45,8,1.45,x,3.5,z,col);box(2.1,.45,2.1,x,.2,z,col);box(2.1,.45,2.1,x,7.7,z,col)}
 makePortal("CHANGING ROOM PORTAL","A cracked doorway opens toward the changing room.",CHANGING_ROOM_URL,-8.7,2.2,-13.35,0xffff00,"CHANGING\nROOM\nPORTAL");
@@ -277,6 +384,53 @@ const l=new THREE.PointLight(0xffff00,2.1,10);l.position.set(0,4.75,-10.9);scene
 function buildShopPortal(){/* details already built in chamber */}
 function buildParticles(){const geo=new THREE.BufferGeometry(),count=180,pos=new Float32Array(count*3);for(let i=0;i<count;i++){pos[i*3]=-14+Math.random()*28;pos[i*3+1]=.2+Math.random()*9;pos[i*3+2]=-14+Math.random()*28}geo.setAttribute('position',new THREE.BufferAttribute(pos,3));const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0x8c8c55,size:.035,transparent:true,opacity:.42}));pts.userData.dust=true;scene.add(pts);animated.push(pts)}
 function bind(){
+
+// Responsive mobile touch controls
+document.querySelectorAll(".mobile-btn").forEach(btn=>{
+ const move=btn.dataset.move;
+ const down=(e)=>{
+  e.preventDefault();
+  if(move==="forward")keys["w"]=true;
+  if(move==="back")keys["s"]=true;
+  if(move==="left")keys["a"]=true;
+  if(move==="right")keys["d"]=true;
+ };
+ const up=(e)=>{
+  e.preventDefault();
+  if(move==="forward")keys["w"]=false;
+  if(move==="back")keys["s"]=false;
+  if(move==="left")keys["a"]=false;
+  if(move==="right")keys["d"]=false;
+ };
+ btn.addEventListener("touchstart",down,{passive:false});
+ btn.addEventListener("touchend",up,{passive:false});
+ btn.addEventListener("touchcancel",up,{passive:false});
+ btn.addEventListener("pointerdown",down);
+ btn.addEventListener("pointerup",up);
+ btn.addEventListener("pointerleave",up);
+});
+
+if(lookZone){
+ lookZone.addEventListener("touchstart",(e)=>{
+  if(modal && modal.style.display==="flex")return;
+  const t=e.touches&&e.touches[0];
+  if(t)touchLook={x:t.clientX,y:t.clientY};
+ },{passive:false});
+ lookZone.addEventListener("touchmove",(e)=>{
+  if(modal && modal.style.display==="flex")return;
+  const t=e.touches&&e.touches[0];
+  if(!t||!touchLook)return;
+  e.preventDefault();
+  const dx=t.clientX-touchLook.x;
+  const dy=t.clientY-touchLook.y;
+  yaw-=dx*.004;
+  pitch-=dy*.004;
+  pitch=Math.max(-1.2,Math.min(1.2,pitch));
+  touchLook={x:t.clientX,y:t.clientY};
+ },{passive:false});
+ lookZone.addEventListener("touchend",()=>touchLook=null,{passive:true});
+}
+
 
 function forceModalPortalNavigation(e){
  const target=activePortalURL || (nearest && nearest.userData && nearest.userData.url) || modalPortal.getAttribute("href");
